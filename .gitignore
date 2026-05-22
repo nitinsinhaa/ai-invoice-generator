@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/logs/*
+!backend/logs/.gitkeep
+*.log
+.DS_Store
+coverage/
+.vite/
+.gh-cli.tar.gz
+gh_2.45.0_linux_amd64/
