@@ -25,6 +25,13 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   if (err.code === '23505') {
+    const detail = err.detail || '';
+    if (detail.includes('invoice_number') || err.constraint?.includes('invoice')) {
+      return ApiResponse.conflict(
+        res,
+        'Invoice number conflict. Please try again — a new number will be assigned.'
+      );
+    }
     return ApiResponse.conflict(res, 'Resource already exists');
   }
 

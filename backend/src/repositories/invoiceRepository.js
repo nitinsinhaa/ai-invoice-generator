@@ -192,29 +192,19 @@ class InvoiceRepository {
   }
 
   async getNextInvoiceNumber(userId, db = pool) {
+    // Use MAX numeric suffix — not created_at (seed rows share identical timestamps).
     const query = `
-      SELECT invoice_number 
-      FROM invoices 
-      WHERE user_id = $1 
-      ORDER BY created_at DESC 
-      LIMIT 1
+      SELECT COALESCE(MAX(
+        (SUBSTRING(invoice_number FROM 'INV-([0-9]+)'))::integer
+      ), 0) AS max_num
+      FROM invoices
+      WHERE user_id = $1
+        AND invoice_number ~ '^INV-[0-9]+$'
     `;
-    
+
     const result = await db.query(query, [userId]);
-    
-    if (result.rows.length === 0) {
-      return 'INV-0001';
-    }
-
-    const lastNumber = result.rows[0].invoice_number;
-    const match = lastNumber.match(/INV-(\d+)/);
-    
-    if (match) {
-      const nextNum = parseInt(match[1]) + 1;
-      return `INV-${String(nextNum).padStart(4, '0')}`;
-    }
-
-    return 'INV-0001';
+    const nextNum = parseInt(result.rows[0].max_num, 10) + 1;
+    return `INV-${String(nextNum).padStart(4, '0')}`;
   }
 }
 
