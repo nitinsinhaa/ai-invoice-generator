@@ -1,5 +1,5 @@
-# Render Blueprint — deploy from GitHub in one click
-# Dashboard: https://dashboard.render.com/blueprints → New Blueprint Instance → connect repo
+# Render Blueprint — single web service serves API + React frontend
+# https://dashboard.render.com/blueprints → New Blueprint Instance
 
 databases:
   - name: ai-invoice-db
@@ -8,14 +8,13 @@ databases:
     user: ai_invoice
 
 services:
-  # Backend API
   - type: web
     name: ai-invoice-api
     runtime: node
     plan: free
     region: oregon
     rootDir: backend
-    buildCommand: npm ci --omit=dev
+    buildCommand: chmod +x ../scripts/render-build.sh && ../scripts/render-build.sh
     startCommand: sh -c "npm run migrate && node src/server.js"
     healthCheckPath: /api/health
     envVars:
@@ -36,22 +35,8 @@ services:
       - key: FRONTEND_URL
         fromService:
           type: web
-          name: ai-invoice-app
+          name: ai-invoice-api
           envVarKey: RENDER_EXTERNAL_URL
-
-  # Frontend (static React app) — static sites are free; no plan field
-  - type: web
-    name: ai-invoice-app
-    runtime: static
-    rootDir: frontend
-    # Must install devDependencies (Vite) — NODE_ENV=production skips them with npm ci
-    buildCommand: npm ci --include=dev && npm run build
-    staticPublishPath: ./dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
       - key: VITE_API_URL
         fromService:
           type: web

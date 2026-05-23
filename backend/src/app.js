@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import config from './config/env.js';
 import pool from './config/database.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
@@ -20,7 +23,14 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(helmet());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientDist = path.join(__dirname, '../../frontend/dist');
+const serveFrontend = config.nodeEnv === 'production' && fs.existsSync(clientDist);
+
+app.use(
+  helmet(serveFrontend ? { contentSecurityPolicy: false } : {})
+);
 app.use(
   cors({
     origin: config.frontendUrl,
@@ -30,17 +40,6 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
-
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'AI Invoice Generator API',
-    hint: 'This is the backend API. Open the frontend URL in your browser to use the app.',
-    frontendUrl: config.frontendUrl,
-    health: '/api/health',
-    docs: 'API routes are under /api/*',
-  });
-});
 
 app.get('/api/health', async (req, res) => {
   try {
@@ -71,6 +70,23 @@ app.use('/api/products', productRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+if (serveFrontend) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({
+      success: true,
+      message: 'AI Invoice Generator API',
+      hint: 'Run the frontend dev server locally, or deploy with scripts/render-build.sh',
+      health: '/api/health',
+    });
+  });
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);

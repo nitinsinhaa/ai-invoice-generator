@@ -28,19 +28,16 @@ First deploy takes ~5–10 minutes. Migrations run automatically on API startup 
 
 ### Step 3: Your live URLs
 
-After deploy, open the **frontend** URL in your browser (that is the app UI):
+After deploy, open your **API service URL** in the browser — it serves both the React app and the API:
 
-| Service | URL | Use |
-|---------|-----|-----|
-| **App (open this)** | `https://ai-invoice-app.onrender.com` | Login, invoices, dashboard |
-| API | `https://ai-invoice-api-xxxx.onrender.com` | JSON API only — not the web UI |
-| Health check | `https://ai-invoice-api-xxxx.onrender.com/api/health` | Verify API + database |
+| What | URL |
+|------|-----|
+| **App (open this)** | `https://ai-invoice-api-xxxx.onrender.com` |
+| Health check | `https://ai-invoice-api-xxxx.onrender.com/api/health` |
 
-Render may assign a suffix to your API URL (e.g. `ai-invoice-api-5bah.onrender.com`). That is normal.
+Render adds a suffix to the URL (e.g. `ai-invoice-api-5bah.onrender.com`). Find yours under **ai-invoice-api** → **Settings**.
 
-**If you see `Route / not found` on the API URL:** you opened the backend by mistake. Use the **ai-invoice-app** URL instead.
-
-**If the frontend shows plain `Not Found`:** the static build likely failed (Vite is a devDependency). Redeploy after pulling latest `render.yaml` (`npm ci --include=dev`). Check **ai-invoice-app** → **Logs** → Build for errors.
+> **Note:** One service hosts the full app (frontend + API). You can ignore or delete the old **ai-invoice-app** static site if it was created by an earlier blueprint.
 
 ### Step 4: Seed demo data (optional)
 

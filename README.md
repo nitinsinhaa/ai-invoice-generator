@@ -28,7 +28,7 @@ npm install && npm run dev
 - **[DEPLOY.md](./DEPLOY.md)** — deploy to Render (recommended), Docker, or VPS
 - **[PRODUCTION.md](./PRODUCTION.md)** — env vars, security checklist
 
-Quick Render: [New Blueprint](https://dashboard.render.com/blueprints) → connect `nitinsinhaa/ai-invoice-generator` → uses `render.yaml`.
+Quick Render: [New Blueprint](https://dashboard.render.com/blueprints) → connect `nitinsinhaa/ai-invoice-generator` → open **ai-invoice-api** URL (serves app + API).
 
 ## Push to GitHub
 
