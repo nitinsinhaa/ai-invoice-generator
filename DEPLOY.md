@@ -40,6 +40,8 @@ Render may assign a suffix to your API URL (e.g. `ai-invoice-api-5bah.onrender.c
 
 **If you see `Route / not found` on the API URL:** you opened the backend by mistake. Use the **ai-invoice-app** URL instead.
 
+**If the frontend shows plain `Not Found`:** the static build likely failed (Vite is a devDependency). Redeploy after pulling latest `render.yaml` (`npm ci --include=dev`). Check **ai-invoice-app** → **Logs** → Build for errors.
+
 ### Step 4: Seed demo data (optional)
 
 In Render → **ai-invoice-api** → **Shell**:

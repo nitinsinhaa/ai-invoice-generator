@@ -44,8 +44,13 @@ services:
     name: ai-invoice-app
     runtime: static
     rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
+    # Must install devDependencies (Vite) — NODE_ENV=production skips them with npm ci
+    buildCommand: npm ci --include=dev && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
         fromService:
