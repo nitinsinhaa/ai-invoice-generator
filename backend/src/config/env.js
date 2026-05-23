@@ -7,10 +7,15 @@ hydrateDbEnvFromUrl();
 
 const env = loadAndValidateEnv();
 
+const frontendUrls = env.FRONTEND_URL.split(',')
+  .map((u) => u.trim())
+  .filter(Boolean);
+
 const config = {
   nodeEnv: env.NODE_ENV,
   port: env.PORT,
-  frontendUrl: env.FRONTEND_URL,
+  frontendUrl: frontendUrls[0],
+  frontendUrls,
 
   database: {
     host: env.DB_HOST,

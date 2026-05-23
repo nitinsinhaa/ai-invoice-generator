@@ -129,7 +129,7 @@ Expected: `"status":"OK"` and `"database":"connected"`.
 
 | Issue | Fix |
 |-------|-----|
-| CORS error in browser | Set `FRONTEND_URL` on API to exact frontend URL (no trailing slash) |
+| CORS error in browser | Use one URL: `https://ai-invoice-api-xxxx.onrender.com` for the app, or redeploy API after latest CORS fix (allows `*.onrender.com`). Set `FRONTEND_URL` to comma-separated origins if needed. |
 | 503 on health | DB still provisioning — wait 2 min and retry |
 | Login works locally but not prod | Re-register or run seed; old JWT from dev won't work |
 | AI features fail | Add `GEMINI_API_KEY` in Render env and redeploy API |

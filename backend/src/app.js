@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import config from './config/env.js';
+import { corsOriginCallback } from './config/cors.js';
 import pool from './config/database.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { apiLimiter } from './middlewares/rateLimiter.js';
@@ -33,7 +34,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: config.frontendUrl,
+    origin: corsOriginCallback,
     credentials: true,
   })
 );
