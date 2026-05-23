@@ -39,11 +39,10 @@ services:
           name: ai-invoice-app
           envVarKey: RENDER_EXTERNAL_URL
 
-  # Frontend (static React app)
+  # Frontend (static React app) — static sites are free; no plan field
   - type: web
     name: ai-invoice-app
     runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
