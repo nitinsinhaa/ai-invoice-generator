@@ -23,9 +23,12 @@ npm install && npm run dev
 - API: http://localhost:5000/api/health  
 - Demo login (after seed): `demo@aiinvoice.com` / `demo123456`
 
-## Production
+## Production & deploy
 
-See [PRODUCTION.md](./PRODUCTION.md) for Docker, env vars, and deployment checklist.
+- **[DEPLOY.md](./DEPLOY.md)** — deploy to Render (recommended), Docker, or VPS
+- **[PRODUCTION.md](./PRODUCTION.md)** — env vars, security checklist
+
+Quick Render: [New Blueprint](https://dashboard.render.com/blueprints) → connect `nitinsinhaa/ai-invoice-generator` → uses `render.yaml`.
 
 ## Push to GitHub
 

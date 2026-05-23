@@ -1,7 +1,14 @@
 import axios from 'axios';
 import { getToken, getRefreshToken, setTokens, clearToken } from '../utils/authToken';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+function normalizeApiUrl(raw) {
+  const fallback = 'http://localhost:5000/api';
+  if (!raw) return fallback;
+  const trimmed = raw.replace(/\/$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+}
+
+const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL);
 
 const axiosInstance = axios.create({
   baseURL: API_URL,

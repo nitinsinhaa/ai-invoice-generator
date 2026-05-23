@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
+import { hydrateDbEnvFromUrl } from './dbConfig.js';
 import { loadAndValidateEnv } from './validateEnv.js';
 
 dotenv.config();
+hydrateDbEnvFromUrl();
 
 const env = loadAndValidateEnv();
 
