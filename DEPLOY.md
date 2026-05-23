@@ -24,7 +24,7 @@ Sign up at [render.com](https://render.com) and connect your GitHub account.
 5. When prompted, set **`GEMINI_API_KEY`** (your Google AI Studio key)
 6. Click **Apply**
 
-First deploy takes ~5–10 minutes. Migrations run automatically via `preDeployCommand`.
+First deploy takes ~5–10 minutes. Migrations run automatically on API startup (`npm run migrate` in start command).
 
 ### Step 3: Your live URLs
 

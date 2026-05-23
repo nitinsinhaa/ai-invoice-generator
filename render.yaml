@@ -16,8 +16,7 @@ services:
     region: oregon
     rootDir: backend
     buildCommand: npm ci --omit=dev
-    startCommand: node src/server.js
-    preDeployCommand: npm run migrate
+    startCommand: sh -c "npm run migrate && node src/server.js"
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
@@ -45,7 +44,6 @@ services:
     name: ai-invoice-app
     runtime: static
     plan: free
-    region: oregon
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
