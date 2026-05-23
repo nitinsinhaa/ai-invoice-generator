@@ -31,6 +31,17 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
 
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'AI Invoice Generator API',
+    hint: 'This is the backend API. Open the frontend URL in your browser to use the app.',
+    frontendUrl: config.frontendUrl,
+    health: '/api/health',
+    docs: 'API routes are under /api/*',
+  });
+});
+
 app.get('/api/health', async (req, res) => {
   try {
     await pool.query('SELECT 1');

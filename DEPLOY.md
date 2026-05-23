@@ -28,15 +28,17 @@ First deploy takes ~5–10 minutes. Migrations run automatically on API startup 
 
 ### Step 3: Your live URLs
 
-After deploy:
+After deploy, open the **frontend** URL in your browser (that is the app UI):
 
-| Service | URL |
-|---------|-----|
-| App | `https://ai-invoice-app.onrender.com` |
-| API | `https://ai-invoice-api.onrender.com` |
-| Health | `https://ai-invoice-api.onrender.com/api/health` |
+| Service | URL | Use |
+|---------|-----|-----|
+| **App (open this)** | `https://ai-invoice-app.onrender.com` | Login, invoices, dashboard |
+| API | `https://ai-invoice-api-xxxx.onrender.com` | JSON API only — not the web UI |
+| Health check | `https://ai-invoice-api-xxxx.onrender.com/api/health` | Verify API + database |
 
-(`onrender.com` subdomain matches the service **name** in `render.yaml`.)
+Render may assign a suffix to your API URL (e.g. `ai-invoice-api-5bah.onrender.com`). That is normal.
+
+**If you see `Route / not found` on the API URL:** you opened the backend by mistake. Use the **ai-invoice-app** URL instead.
 
 ### Step 4: Seed demo data (optional)
 
