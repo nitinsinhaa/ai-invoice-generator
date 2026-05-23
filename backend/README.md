@@ -121,11 +121,14 @@ npm run dev
 
 ## API Documentation
 
+All authenticated REST endpoints use the **`/api/v1`** prefix (e.g. `/api/v1/invoices`).  
+`GET /api/health` and `GET /api/v1/health` are both available for health checks.
+
 ### Authentication Endpoints
 
 #### Register
 ```http
-POST /api/auth/register
+POST /api/v1/auth/register
 Content-Type: application/json
 
 {
@@ -138,7 +141,7 @@ Content-Type: application/json
 
 #### Login
 ```http
-POST /api/auth/login
+POST /api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -149,7 +152,7 @@ Content-Type: application/json
 
 #### Get Profile
 ```http
-GET /api/auth/profile
+GET /api/v1/auth/profile
 Authorization: Bearer <token>
 ```
 
@@ -157,7 +160,7 @@ Authorization: Bearer <token>
 
 #### Create Invoice
 ```http
-POST /api/invoices
+POST /api/v1/invoices
 Authorization: Bearer <token>
 Content-Type: application/json
 
@@ -186,19 +189,19 @@ Content-Type: application/json
 
 #### Get All Invoices
 ```http
-GET /api/invoices?page=1&limit=10&status=pending
+GET /api/v1/invoices?page=1&limit=10&status=pending
 Authorization: Bearer <token>
 ```
 
 #### Download Invoice PDF
 ```http
-GET /api/invoices/:id/download
+GET /api/v1/invoices/:id/download
 Authorization: Bearer <token>
 ```
 
 #### Send Invoice Email
 ```http
-POST /api/invoices/:id/send
+POST /api/v1/invoices/:id/send
 Authorization: Bearer <token>
 Content-Type: application/json
 
@@ -211,7 +214,7 @@ Content-Type: application/json
 
 #### Generate Description
 ```http
-POST /api/ai/generate-description
+POST /api/v1/ai/generate-description
 Authorization: Bearer <token>
 Content-Type: application/json
 
@@ -223,7 +226,7 @@ Content-Type: application/json
 
 #### Suggest Tax Rate
 ```http
-POST /api/ai/suggest-tax
+POST /api/v1/ai/suggest-tax
 Authorization: Bearer <token>
 Content-Type: application/json
 

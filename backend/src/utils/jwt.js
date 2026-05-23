@@ -21,12 +21,12 @@ export const verifyAccessToken = (token) => {
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
     if (decoded.type && decoded.type !== 'access') {
-      throw new AppError.unauthorized('Invalid access token');
+      throw AppError.unauthorized('Invalid access token');
     }
     return decoded;
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError.unauthorized('Invalid or expired token');
+    throw AppError.unauthorized('Invalid or expired token');
   }
 };
 
@@ -34,12 +34,12 @@ export const verifyRefreshToken = (token) => {
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
     if (decoded.type !== 'refresh') {
-      throw new AppError.unauthorized('Invalid refresh token');
+      throw AppError.unauthorized('Invalid refresh token');
     }
     return decoded;
   } catch (error) {
     if (error instanceof AppError) throw error;
-    throw new AppError.unauthorized('Invalid or expired refresh token');
+    throw AppError.unauthorized('Invalid or expired refresh token');
   }
 };
 

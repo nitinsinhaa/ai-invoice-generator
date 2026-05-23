@@ -6,6 +6,7 @@ import { InventoryProvider } from './context/InventoryContext';
 import { ExpenseProvider } from './context/ExpenseContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
+import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -24,30 +25,30 @@ function App() {
         <InventoryProvider>
           <ExpenseProvider>
             <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="transactions" element={<Transactions />} />
-              <Route path="invoices" element={<Invoices />} />
-              <Route path="expenses" element={<Expenses />} />
-              <Route path="inventory" element={<Inventory />} />
-              <Route path="wallet" element={<Wallet />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
+              <Routes>
+                <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+                <Route path="/register" element={<ErrorBoundary><Register /></ErrorBoundary>} />
 
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+                  <Route path="transactions" element={<ErrorBoundary><Transactions /></ErrorBoundary>} />
+                  <Route path="invoices" element={<ErrorBoundary><Invoices /></ErrorBoundary>} />
+                  <Route path="expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
+                  <Route path="inventory" element={<ErrorBoundary><Inventory /></ErrorBoundary>} />
+                  <Route path="wallet" element={<ErrorBoundary><Wallet /></ErrorBoundary>} />
+                  <Route path="settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+                </Route>
+
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
             </BrowserRouter>
           </ExpenseProvider>
         </InventoryProvider>

@@ -1,9 +1,11 @@
 import express from 'express';
 import aiController from '../controllers/aiController.js';
 import { authenticate } from '../middlewares/auth.js';
+import { aiLimiter } from '../middlewares/rateLimiter.js';
 
 const router = express.Router();
 
+router.use(aiLimiter);
 router.use(authenticate);
 
 router.get('/business-insights', aiController.businessInsights);

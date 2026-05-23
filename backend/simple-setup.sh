@@ -48,6 +48,7 @@ DB_PASSWORD=$DB_PASSWORD
 JWT_SECRET=$JWT_SECRET
 JWT_EXPIRE=7d
 
+# Set your key in .env after setup — never commit real API keys
 GEMINI_API_KEY=your_gemini_api_key_here
 
 EMAIL_HOST=smtp.gmail.com
@@ -84,7 +85,7 @@ $JWT_SECRET
 
 GEMINI API KEY:
 --------------
-your_gemini_api_key_here
+(Set manually in .env — see GEMINI_API_KEY)
 
 CONNECTION STRING:
 -----------------
@@ -119,4 +120,14 @@ echo "   npm run dev"
 echo ""
 echo "🔐 Your credentials are saved in credentials.txt"
 echo ""
+validate_gemini_api_key() {
+  if ! grep -qE '^GEMINI_API_KEY=.' .env 2>/dev/null || grep -qE '^GEMINI_API_KEY=your_gemini_api_key_here' .env; then
+    echo ""
+    echo "✗ GEMINI_API_KEY must be set in .env (replace your_gemini_api_key_here) before proceeding."
+    echo "  Get a key from https://aistudio.google.com/apikey"
+    exit 1
+  fi
+}
+
+validate_gemini_api_key
 echo "✅ Setup complete!"

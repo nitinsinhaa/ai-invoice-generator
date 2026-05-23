@@ -60,6 +60,7 @@ DB_PASSWORD=$DB_PASSWORD
 JWT_SECRET=$JWT_SECRET
 JWT_EXPIRE=7d
 
+# Set your key in .env after setup — never commit real API keys
 GEMINI_API_KEY=your_gemini_api_key_here
 
 EMAIL_HOST=smtp.gmail.com
@@ -76,6 +77,14 @@ RATE_LIMIT_MAX_REQUESTS=100
 EOF
 
 echo -e "${GREEN}✓ .env file created${NC}"
+
+validate_gemini_api_key() {
+  if ! grep -qE '^GEMINI_API_KEY=.' .env 2>/dev/null || grep -qE '^GEMINI_API_KEY=your_gemini_api_key_here' .env; then
+    echo -e "${RED}✗ GEMINI_API_KEY must be set in .env (replace your_gemini_api_key_here)${NC}"
+    echo "  Get a key from https://aistudio.google.com/apikey"
+    exit 1
+  fi
+}
 
 # Save credentials to a separate file for reference
 echo "💾 Saving credentials to credentials.txt..."
@@ -97,7 +106,7 @@ $JWT_SECRET
 
 GEMINI API KEY:
 --------------
-your_gemini_api_key_here
+(Set manually in .env — see GEMINI_API_KEY)
 
 IMPORTANT:
 ----------
@@ -192,6 +201,8 @@ echo "🔄 Running database migrations..."
 npm run migrate
 
 echo ""
+validate_gemini_api_key
+
 echo -e "${GREEN}=========================================="
 echo "✅ Setup Complete!"
 echo "==========================================${NC}"

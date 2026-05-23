@@ -9,10 +9,10 @@ import { AppError } from '../errors/AppError.js';
 import { paginatedResponse } from '../utils/pagination.js';
 
 class InvoiceService {
-  async createInvoice(userId, invoiceData) {
+  async _createInvoiceInTransaction(userId, invoiceData) {
     const status = invoiceData.status || 'pending';
 
-    const { invoice, customerId, stockUpdates } = await withTransaction(async (client) => {
+    return withTransaction(async (client) => {
       let customerId = invoiceData.customer_id;
 
       if (!customerId && invoiceData.customer) {
@@ -87,15 +87,38 @@ class InvoiceService {
 
       return { invoice, customerId, stockUpdates };
     });
+  }
 
-    if (status === 'paid') {
-      await this.recordInvoicePayment(userId, invoice, customerId, stockUpdates);
-      const paidInvoice = await this.getInvoiceById(userId, invoice.id);
-      notificationService.onInvoicePaid(userId, paidInvoice).catch(() => {});
-      return paidInvoice;
+  async createInvoice(userId, invoiceData) {
+    const status = invoiceData.status || 'pending';
+    const maxAttempts = 3;
+    let lastError;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const { invoice, customerId, stockUpdates } = await this._createInvoiceInTransaction(
+          userId,
+          invoiceData
+        );
+
+        if (status === 'paid') {
+          await this.recordInvoicePayment(userId, invoice, customerId, stockUpdates);
+          const paidInvoice = await this.getInvoiceById(userId, invoice.id);
+          notificationService.onInvoicePaid(userId, paidInvoice).catch(() => {});
+          return paidInvoice;
+        }
+
+        return this.getInvoiceById(userId, invoice.id);
+      } catch (error) {
+        lastError = error;
+        if (error.code === '23505' && attempt < maxAttempts) {
+          continue;
+        }
+        throw error;
+      }
     }
 
-    return this.getInvoiceById(userId, invoice.id);
+    throw lastError;
   }
 
   async recordInvoicePayment(userId, invoice, customerId, stockUpdates = []) {

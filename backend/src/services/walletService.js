@@ -1,4 +1,6 @@
 import walletRepository from '../repositories/walletRepository.js';
+import { withTransaction } from '../config/transaction.js';
+import { AppError } from '../errors/AppError.js';
 
 class WalletService {
   async getWallet(userId) {
@@ -12,64 +14,77 @@ class WalletService {
   }
 
   async addFunds(userId, amount, description) {
-    const wallet = await this.getWallet(userId);
-    const newBalance = parseFloat(wallet.balance) + parseFloat(amount);
+    return withTransaction(async (client) => {
+      let wallet = await walletRepository.findByUserIdForUpdate(userId, client);
+      if (!wallet) {
+        wallet = await walletRepository.create(userId, client);
+        wallet = await walletRepository.findByUserIdForUpdate(userId, client);
+      }
 
-    const updatedWallet = await walletRepository.updateBalance(wallet.id, newBalance);
+      const newBalance = parseFloat(wallet.balance) + parseFloat(amount);
+      const updatedWallet = await walletRepository.updateBalance(wallet.id, newBalance, client);
 
-    await walletRepository.createTransaction({
-      wallet_id: wallet.id,
-      transaction_type: 'deposit',
-      amount: amount,
-      balance_after: newBalance,
-      description: description || 'Deposit',
+      await walletRepository.createTransaction(
+        {
+          wallet_id: wallet.id,
+          transaction_type: 'deposit',
+          amount,
+          balance_after: newBalance,
+          description: description || 'Deposit',
+        },
+        client
+      );
+
+      return updatedWallet;
     });
-
-    return updatedWallet;
   }
 
   async withdrawFunds(userId, amount, description) {
-    const wallet = await this.getWallet(userId);
-    const currentBalance = parseFloat(wallet.balance);
+    return withTransaction(async (client) => {
+      const wallet = await walletRepository.findByUserIdForUpdate(userId, client);
+      if (!wallet) {
+        throw AppError.notFound('Wallet not found');
+      }
 
-    if (currentBalance < parseFloat(amount)) {
-      throw new Error('Insufficient balance');
-    }
+      const currentBalance = parseFloat(wallet.balance);
+      const withdrawAmount = parseFloat(amount);
 
-    const newBalance = currentBalance - parseFloat(amount);
+      if (currentBalance < withdrawAmount) {
+        throw AppError.badRequest('Insufficient balance');
+      }
 
-    const updatedWallet = await walletRepository.updateBalance(wallet.id, newBalance);
+      const newBalance = currentBalance - withdrawAmount;
+      const updatedWallet = await walletRepository.updateBalance(wallet.id, newBalance, client);
 
-    await walletRepository.createTransaction({
-      wallet_id: wallet.id,
-      transaction_type: 'withdrawal',
-      amount: amount,
-      balance_after: newBalance,
-      description: description || 'Withdrawal',
+      await walletRepository.createTransaction(
+        {
+          wallet_id: wallet.id,
+          transaction_type: 'withdrawal',
+          amount: withdrawAmount,
+          balance_after: newBalance,
+          description: description || 'Withdrawal',
+        },
+        client
+      );
+
+      return updatedWallet;
     });
-
-    return updatedWallet;
   }
 
   async getTransactions(userId, limit, offset) {
     const wallet = await this.getWallet(userId);
-    const transactions = await walletRepository.getTransactions(wallet.id, limit, offset);
-
-    return transactions;
+    return walletRepository.getTransactions(wallet.id, limit, offset);
   }
 
   async getBankAccounts(userId) {
-    const accounts = await walletRepository.getBankAccounts(userId);
-    return accounts;
+    return walletRepository.getBankAccounts(userId);
   }
 
   async addBankAccount(userId, accountData) {
-    const account = await walletRepository.createBankAccount({
+    return walletRepository.createBankAccount({
       user_id: userId,
       ...accountData,
     });
-
-    return account;
   }
 
   async removeBankAccount(userId, accountId) {

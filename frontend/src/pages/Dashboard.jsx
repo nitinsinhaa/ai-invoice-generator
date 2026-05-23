@@ -16,6 +16,7 @@ import {
 import Header from '../components/Header';
 import StatCard from '../components/StatCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorBoundary from '../components/ErrorBoundary';
 import Badge from '../components/Badge';
 import { dashboardApi } from '../api/dashboardApi';
 import { aiApi } from '../api/aiApi';
@@ -130,6 +131,7 @@ const Dashboard = () => {
     <div>
       <Header title="Dashboard" />
 
+      <ErrorBoundary>
       <div className="p-8">
 
         {(insights || insightsLoading) && (
@@ -295,6 +297,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      </ErrorBoundary>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { Plus, Search, Edit, Trash2, Package } from 'lucide-react';
 import Header from '../components/Header';
 import PageInfo from '../components/PageInfo';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useApp } from '../context/AppContext';
 import { useInventory } from '../context/InventoryContext';
 import { formatCurrency } from '../utils/currency';
@@ -53,10 +54,15 @@ const Inventory = () => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      deleteProduct(id);
+    setDeleteConfirm({ open: true, id });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.id) {
+      deleteProduct(deleteConfirm.id);
       toast.success('Product deleted successfully!');
     }
+    setDeleteConfirm({ open: false, id: null });
   };
 
   const resetForm = () => {
@@ -265,6 +271,14 @@ const Inventory = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.open}
+        title="Delete product"
+        message="Are you sure you want to delete this product? This action cannot be undone."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false, id: null })}
+      />
     </div>
   );
 };

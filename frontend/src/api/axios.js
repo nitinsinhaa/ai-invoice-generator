@@ -8,7 +8,7 @@ function normalizeApiUrl(raw) {
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
 }
 
-const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL);
+const API_URL = `${normalizeApiUrl(import.meta.env.VITE_API_URL)}/v1`;
 
 const axiosInstance = axios.create({
   baseURL: API_URL,

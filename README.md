@@ -20,8 +20,21 @@ npm install && npm run dev
 ```
 
 - App: http://localhost:3000  
-- API: http://localhost:5000/api/health  
+- API health: http://localhost:5000/api/health (legacy) or http://localhost:5000/api/v1/health  
+- REST API base path: **`/api/v1`** (e.g. `/api/v1/auth/login`, `/api/v1/invoices`)  
 - Demo login (after seed): `demo@aiinvoice.com` / `demo123456`
+
+### Rate limiting (production)
+
+When `NODE_ENV=production`:
+
+| Endpoint group | Limit |
+|----------------|-------|
+| General API | 100 requests / 15 min per IP |
+| AI routes (`/api/v1/ai/*`) | 20 requests / minute per user |
+| Invoice email send | 10 emails / hour per user |
+
+Limits are relaxed in development (`NODE_ENV=development`).
 
 ## Production & deploy
 

@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import { userAdvisoryLockKeys } from '../utils/userLock.js';
 
 class InvoiceRepository {
   async create(invoiceData, db = pool) {
@@ -192,6 +193,9 @@ class InvoiceRepository {
   }
 
   async getNextInvoiceNumber(userId, db = pool) {
+    const [key1, key2] = userAdvisoryLockKeys(userId);
+    await db.query('SELECT pg_advisory_xact_lock($1, $2)', [key1, key2]);
+
     // Use MAX numeric suffix — not created_at (seed rows share identical timestamps).
     const query = `
       SELECT COALESCE(MAX(

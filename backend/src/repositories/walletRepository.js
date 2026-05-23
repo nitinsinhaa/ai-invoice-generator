@@ -1,24 +1,30 @@
 import pool from '../config/database.js';
 
 class WalletRepository {
-  async create(userId) {
+  async create(userId, db = pool) {
     const query = `
       INSERT INTO wallets (user_id, balance)
       VALUES ($1, 0.00)
       RETURNING *
     `;
 
-    const result = await pool.query(query, [userId]);
+    const result = await db.query(query, [userId]);
     return result.rows[0];
   }
 
-  async findByUserId(userId) {
+  async findByUserId(userId, db = pool) {
     const query = 'SELECT * FROM wallets WHERE user_id = $1';
-    const result = await pool.query(query, [userId]);
+    const result = await db.query(query, [userId]);
     return result.rows[0];
   }
 
-  async updateBalance(walletId, newBalance) {
+  async findByUserIdForUpdate(userId, db = pool) {
+    const query = 'SELECT * FROM wallets WHERE user_id = $1 FOR UPDATE';
+    const result = await db.query(query, [userId]);
+    return result.rows[0];
+  }
+
+  async updateBalance(walletId, newBalance, db = pool) {
     const query = `
       UPDATE wallets 
       SET balance = $1 
@@ -26,12 +32,13 @@ class WalletRepository {
       RETURNING *
     `;
 
-    const result = await pool.query(query, [newBalance, walletId]);
+    const result = await db.query(query, [newBalance, walletId]);
     return result.rows[0];
   }
 
-  async createTransaction(transactionData) {
-    const { wallet_id, transaction_type, amount, balance_after, description, reference_id } = transactionData;
+  async createTransaction(transactionData, db = pool) {
+    const { wallet_id, transaction_type, amount, balance_after, description, reference_id } =
+      transactionData;
 
     const query = `
       INSERT INTO wallet_transactions (
@@ -41,8 +48,13 @@ class WalletRepository {
       RETURNING *
     `;
 
-    const result = await pool.query(query, [
-      wallet_id, transaction_type, amount, balance_after, description, reference_id
+    const result = await db.query(query, [
+      wallet_id,
+      transaction_type,
+      amount,
+      balance_after,
+      description,
+      reference_id,
     ]);
 
     return result.rows[0];
@@ -73,8 +85,13 @@ class WalletRepository {
 
   async createBankAccount(accountData) {
     const {
-      user_id, account_name, account_number, bank_name,
-      routing_number, account_type, is_primary
+      user_id,
+      account_name,
+      account_number,
+      bank_name,
+      routing_number,
+      account_type,
+      is_primary,
     } = accountData;
 
     const query = `
@@ -87,8 +104,13 @@ class WalletRepository {
     `;
 
     const result = await pool.query(query, [
-      user_id, account_name, account_number, bank_name,
-      routing_number, account_type, is_primary
+      user_id,
+      account_name,
+      account_number,
+      bank_name,
+      routing_number,
+      account_type,
+      is_primary,
     ]);
 
     return result.rows[0];

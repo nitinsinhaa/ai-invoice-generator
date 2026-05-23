@@ -2,6 +2,7 @@ import express from 'express';
 import invoiceController from '../controllers/invoiceController.js';
 import { authenticate } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validateZod.js';
+import { emailLimiter } from '../middlewares/rateLimiter.js';
 import { createInvoiceSchema, updateInvoiceSchema } from '../validations/schemas.js';
 
 const router = express.Router();
@@ -12,7 +13,7 @@ router.post('/', validate(createInvoiceSchema), invoiceController.createInvoice)
 router.get('/stats', invoiceController.getInvoiceStats);
 router.get('/', invoiceController.getInvoices);
 router.get('/:id/download', invoiceController.downloadInvoice);
-router.post('/:id/send', invoiceController.sendInvoiceEmail);
+router.post('/:id/send', emailLimiter, invoiceController.sendInvoiceEmail);
 router.patch('/:id/mark-paid', invoiceController.markAsPaid);
 router.get('/:id', invoiceController.getInvoiceById);
 router.put('/:id', validate(updateInvoiceSchema), invoiceController.updateInvoice);

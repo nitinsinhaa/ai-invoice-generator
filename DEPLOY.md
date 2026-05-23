@@ -33,7 +33,7 @@ After deploy, open your **API service URL** in the browser — it serves both th
 | What | URL |
 |------|-----|
 | **App (open this)** | `https://ai-invoice-api-xxxx.onrender.com` |
-| Health check | `https://ai-invoice-api-xxxx.onrender.com/api/health` |
+| Health check | `https://ai-invoice-api-xxxx.onrender.com/api/health` or `/api/v1/health` |
 
 Render adds a suffix to the URL (e.g. `ai-invoice-api-5bah.onrender.com`). Find yours under **ai-invoice-api** → **Settings**.
 

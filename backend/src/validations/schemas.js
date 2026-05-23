@@ -90,6 +90,19 @@ export const updateProfileSchema = z
     message: 'At least one field is required',
   });
 
+export const addFundsSchema = z.object({
+  amount: z.coerce.number().positive('Amount must be positive').max(10000000, 'Amount too large'),
+  description: z.string().max(255).optional(),
+});
+
+export const bankAccountSchema = z.object({
+  account_name: z.string().min(1).max(100),
+  account_number: z.string().min(4).max(30),
+  bank_name: z.string().min(1).max(100),
+  routing_number: z.string().max(50).optional(),
+  account_type: z.enum(['checking', 'savings', 'current']).default('checking'),
+});
+
 export const productSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),

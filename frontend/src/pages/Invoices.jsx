@@ -1,15 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Download, Mail, Trash2, Sparkles, CheckCircle } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, Download, Mail, Sparkles, CheckCircle } from 'lucide-react';
 import Header from '../components/Header';
-import PageInfo from '../components/PageInfo';
 import Table from '../components/Table';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorBoundary from '../components/ErrorBoundary';
+import InvoiceLineItems from '../components/InvoiceLineItems';
 import { useInventory } from '../context/InventoryContext';
 import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/currency';
 import { invoiceApi } from '../api/invoiceApi';
 import { aiApi } from '../api/aiApi';
+import { calculateInvoiceTotals, useInvoiceCalculations } from '../hooks/useInvoiceCalculations';
+import { useInvoiceActions } from '../hooks/useInvoiceActions';
 import toast from 'react-hot-toast';
 
 const Invoices = () => {
@@ -35,11 +38,7 @@ const Invoices = () => {
     status: 'pending',
   });
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     try {
       setLoading(true);
       const response = await invoiceApi.getInvoices();
@@ -52,26 +51,15 @@ const Invoices = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const calculateTotals = (items, taxRate, discountRate) => {
-    const subtotal = items.reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
-    const taxAmount = (subtotal * parseFloat(taxRate || 0)) / 100;
-    const discountAmount = (subtotal * parseFloat(discountRate || 0)) / 100;
-    const total = subtotal + taxAmount - discountAmount;
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
 
-    return {
-      subtotal,
-      tax_amount: taxAmount,
-      discount_amount: discountAmount,
-      total,
-    };
-  };
-
-  const totals = useMemo(
-    () => calculateTotals(formData.items, formData.tax_rate, formData.discount_rate),
-    [formData.items, formData.tax_rate, formData.discount_rate]
-  );
+  const totals = useInvoiceCalculations(formData.items, formData.tax_rate, formData.discount_rate);
+  const { handleMarkAsPaid, handleInvoiceStatusChange, handleDownload, handleSendEmail } =
+    useInvoiceActions(fetchInvoices);
 
   const extractAiData = (response) => response.data?.data ?? response.data ?? {};
 
@@ -83,7 +71,7 @@ const Invoices = () => {
       newItems[index].total = newItems[index].quantity * newItems[index].unit_price;
     }
 
-    const totals = calculateTotals(newItems, formData.tax_rate, formData.discount_rate);
+    const totals = calculateInvoiceTotals(newItems, formData.tax_rate, formData.discount_rate);
     setFormData({ ...formData, items: newItems, ...totals });
   };
 
@@ -96,7 +84,7 @@ const Invoices = () => {
 
   const removeItem = (index) => {
     const newItems = formData.items.filter((_, i) => i !== index);
-    const totals = calculateTotals(newItems, formData.tax_rate, formData.discount_rate);
+    const totals = calculateInvoiceTotals(newItems, formData.tax_rate, formData.discount_rate);
     setFormData({ ...formData, items: newItems, ...totals });
   };
 
@@ -153,7 +141,7 @@ const Invoices = () => {
   };
 
   const buildPayload = () => {
-    const totals = calculateTotals(formData.items, formData.tax_rate, formData.discount_rate);
+    const totals = calculateInvoiceTotals(formData.items, formData.tax_rate, formData.discount_rate);
     return {
       customer: formData.customer,
       invoice_date: formData.invoice_date,
@@ -181,45 +169,9 @@ const Invoices = () => {
       );
       setShowModal(false);
       fetchInvoices();
-      fetchProducts();
       resetForm();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create invoice');
-    }
-  };
-
-  const handleMarkAsPaid = async (id) => {
-    try {
-      await invoiceApi.markAsPaid(id);
-      toast.success('Invoice marked as paid — revenue recorded in Sales History');
-      fetchInvoices();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to mark invoice as paid');
-    }
-  };
-
-  const handleInvoiceStatusChange = async (invoice, newStatus) => {
-    if (invoice.status === newStatus) return;
-
-    const previousStatus = invoice.status;
-    setInvoices((prev) =>
-      prev.map((inv) => (inv.id === invoice.id ? { ...inv, status: newStatus } : inv))
-    );
-
-    try {
-      if (newStatus === 'paid') {
-        await invoiceApi.markAsPaid(invoice.id);
-        toast.success('Invoice marked as paid');
-      } else {
-        await invoiceApi.updateInvoice(invoice.id, { status: newStatus });
-        toast.success(`Payment status updated to ${newStatus}`);
-      }
-      await fetchInvoices();
-    } catch (error) {
-      setInvoices((prev) =>
-        prev.map((inv) => (inv.id === invoice.id ? { ...inv, status: previousStatus } : inv))
-      );
-      toast.error(error.response?.data?.message || error.message || 'Failed to update payment status');
     }
   };
 
@@ -238,37 +190,6 @@ const Invoices = () => {
       notes: '',
       status: 'pending',
     });
-  };
-
-  const handleDownload = async (id) => {
-    try {
-      const response = await invoiceApi.downloadInvoice(id);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `invoice-${id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success('Invoice downloaded!');
-    } catch (error) {
-      toast.error('Failed to download invoice');
-    }
-  };
-
-  const handleSendEmail = async (id) => {
-    try {
-      const response = await invoiceApi.sendInvoice(id, {});
-      const data = response.data?.data;
-      if (data?.previewUrl) {
-        toast.success('Invoice sent (dev mode — opening preview)');
-        window.open(data.previewUrl, '_blank');
-      } else {
-        toast.success(response.data?.message || 'Invoice sent via email!');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send invoice email');
-    }
   };
 
   const columns = [
@@ -306,7 +227,7 @@ const Invoices = () => {
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => {
             e.stopPropagation();
-            handleInvoiceStatusChange(row, e.target.value);
+            handleInvoiceStatusChange(row, e.target.value, setInvoices);
           }}
         >
           <option value="pending">Pending</option>
@@ -349,6 +270,7 @@ const Invoices = () => {
   ];
 
   return (
+    <ErrorBoundary>
     <div>
       <Header title="Invoices" />
 
@@ -439,102 +361,15 @@ const Invoices = () => {
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Items</h3>
-              <button type="button" onClick={addItem} className="btn-secondary text-sm">
-                Add Item
-              </button>
-            </div>
-
-            {formData.items.map((item, index) => (
-              <div key={index} className="grid grid-cols-12 gap-3 mb-3 items-start">
-                <div className="col-span-3">
-                  <select
-                    className="input-field"
-                    value={item.product_id || ''}
-                    onChange={(e) => {
-                      const productId = e.target.value;
-                      if (productId) {
-                        const availableProducts = getAvailableProducts();
-                        const product = availableProducts.find(p => p.id === productId);
-                        if (product) {
-                          handleItemChange(index, 'product_id', productId);
-                          handleItemChange(index, 'product_name', product.name);
-                          handleItemChange(index, 'description', product.description);
-                          handleItemChange(index, 'unit_price', product.price);
-                        }
-                      } else {
-                        handleItemChange(index, 'product_id', '');
-                        handleItemChange(index, 'product_name', '');
-                      }
-                    }}
-                  >
-                    <option value="">Select product...</option>
-                    {getAvailableProducts().map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} - {formatCurrency(product.price, currency)} (Stock: {product.stock})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-3 relative">
-                  <input
-                    type="text"
-                    placeholder="Description"
-                    className="input-field pr-10"
-                    value={item.description}
-                    onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAIDescription(index)}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
-                    title="Generate with AI"
-                  >
-                    <Sparkles className="w-4 h-4 text-primary-600" />
-                  </button>
-                </div>
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    placeholder="Qty"
-                    className="input-field"
-                    value={item.quantity}
-                    onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    className="input-field"
-                    value={item.unit_price}
-                    onChange={(e) => handleItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                  />
-                </div>
-                <div className="col-span-1">
-                  <input
-                    type="text"
-                    className="input-field"
-                    value={formatCurrency(item.total, 'INR')}
-                    readOnly
-                  />
-                </div>
-                <div className="col-span-1">
-                  {formData.items.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      className="p-2 hover:bg-red-50 rounded-lg text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <InvoiceLineItems
+            items={formData.items}
+            onItemChange={handleItemChange}
+            onAdd={addItem}
+            onRemove={removeItem}
+            onAIDescription={handleAIDescription}
+            availableProducts={getAvailableProducts()}
+            currency={currency}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -545,7 +380,7 @@ const Invoices = () => {
                 className="input-field"
                 value={formData.tax_rate}
                 onChange={(e) => {
-                  const next = calculateTotals(formData.items, e.target.value, formData.discount_rate);
+                  const next = calculateInvoiceTotals(formData.items, e.target.value, formData.discount_rate);
                   setFormData({ ...formData, tax_rate: e.target.value, ...next });
                 }}
               />
@@ -557,7 +392,7 @@ const Invoices = () => {
                 className="input-field"
                 value={formData.discount_rate}
                 onChange={(e) => {
-                  const totals = calculateTotals(formData.items, formData.tax_rate, e.target.value);
+                  const totals = calculateInvoiceTotals(formData.items, formData.tax_rate, e.target.value);
                   setFormData({ ...formData, discount_rate: e.target.value, ...totals });
                 }}
               />
@@ -616,6 +451,7 @@ const Invoices = () => {
         </form>
       </Modal>
     </div>
+    </ErrorBoundary>
   );
 };
 

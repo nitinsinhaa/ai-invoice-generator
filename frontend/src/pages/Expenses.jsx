@@ -8,6 +8,7 @@ import StatCard from '../components/StatCard';
 import Table from '../components/Table';
 import Badge from '../components/Badge';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { useApp } from '../context/AppContext';
 import { useExpense } from '../context/ExpenseContext';
 import { formatCurrency } from '../utils/currency';
@@ -189,6 +190,7 @@ const Expenses = () => {
     <div>
       <Header title="Expenses" />
 
+      <ErrorBoundary>
       <div className="p-8">
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -429,6 +431,7 @@ const Expenses = () => {
           </div>
         </form>
       </Modal>
+      </ErrorBoundary>
     </div>
   );
 };

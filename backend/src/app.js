@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import config from './config/env.js';
 import { corsOriginCallback } from './config/cors.js';
 import pool from './config/database.js';
+import logger from './utils/logger.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import { apiLimiter } from './middlewares/rateLimiter.js';
 import authRoutes from './routes/authRoutes.js';
@@ -21,6 +22,7 @@ import aiRoutes from './routes/aiRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
+const API_PREFIX = '/api/v1';
 
 app.set('trust proxy', 1);
 
@@ -29,9 +31,7 @@ const __dirname = path.dirname(__filename);
 const clientDist = path.join(__dirname, '../../frontend/dist');
 const serveFrontend = config.nodeEnv === 'production' && fs.existsSync(clientDist);
 
-app.use(
-  helmet(serveFrontend ? { contentSecurityPolicy: false } : {})
-);
+app.use(helmet(serveFrontend ? { contentSecurityPolicy: false } : {}));
 app.use(
   cors({
     origin: corsOriginCallback,
@@ -40,9 +40,16 @@ app.use(
 );
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
+app.use(
+  morgan(config.nodeEnv === 'production' ? 'combined' : 'dev', {
+    stream:
+      config.nodeEnv === 'production'
+        ? { write: (message) => logger.http(message.trim()) }
+        : undefined,
+  })
+);
 
-app.get('/api/health', async (req, res) => {
+const healthHandler = async (req, res) => {
   try {
     await pool.query('SELECT 1');
     res.json({
@@ -58,19 +65,23 @@ app.get('/api/health', async (req, res) => {
       database: 'disconnected',
     });
   }
-});
+};
+
+app.get('/api/health', healthHandler);
+app.get(`${API_PREFIX}/health`, healthHandler);
 
 app.use('/api', apiLimiter);
+app.use(API_PREFIX, apiLimiter);
 
-app.use('/api/auth', authRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/wallet', walletRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/expenses', expenseRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/invoices`, invoiceRoutes);
+app.use(`${API_PREFIX}/transactions`, transactionRoutes);
+app.use(`${API_PREFIX}/wallet`, walletRoutes);
+app.use(`${API_PREFIX}/dashboard`, dashboardRoutes);
+app.use(`${API_PREFIX}/products`, productRoutes);
+app.use(`${API_PREFIX}/expenses`, expenseRoutes);
+app.use(`${API_PREFIX}/ai`, aiRoutes);
+app.use(`${API_PREFIX}/notifications`, notificationRoutes);
 
 if (serveFrontend) {
   app.use(express.static(clientDist));
@@ -84,7 +95,7 @@ if (serveFrontend) {
       success: true,
       message: 'AI Invoice Generator API',
       hint: 'Run the frontend dev server locally, or deploy with scripts/render-build.sh',
-      health: '/api/health',
+      health: `${API_PREFIX}/health`,
     });
   });
 }
